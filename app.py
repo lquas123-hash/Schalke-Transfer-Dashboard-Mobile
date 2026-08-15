@@ -78,26 +78,29 @@ try:
     else:
         df_display = df
 
-    # Exakte Reihenfolge definiert
     desired_cols = ["Saison", "Manager", "Spieler", "Ablöse"]
     cols_to_show = [c for c in desired_cols if c in df_display.columns]
     st.dataframe(df_display[cols_to_show], use_container_width=True, hide_index=True)
 
     st.divider()
 
-    # 5. FOKUS-GRAFIK (Mit gedrehten, lesbaren Jahreszahlen unten)
+    # 5. FOKUS-GRAFIK (Mit abgekürzten, waagerechten Saisons)
     st.subheader("Ausgaben-Verlauf")
     if not df.empty:
         df_chart = df.groupby("Saison")["Ablöse_num"].sum().reset_index()
-        df_chart["Mio"] = df_chart["Ablöse_num"] / 1e6
-        fig = px.bar(df_chart, x="Saison", y="Mio", labels={"Mio": "Mio. €"})
         
-        # tickangle=-90 sorgt dafür, dass die Saisons senkrecht stehen und perfekt lesbar sind
+        # Saison abkürzen (z. B. "2001/2002" -> "2001")
+        df_chart["Saison_kurz"] = df_chart["Saison"].astype(str).str.split('/').str[0]
+        df_chart["Mio"] = df_chart["Ablöse_num"] / 1e6
+        
+        fig = px.bar(df_chart, x="Saison_kurz", y="Mio", labels={"Mio": "Mio. €", "Saison_kurz": "Saison"})
+        
+        # tickangle: 0 stellt den Text waagerecht direkt unter die Balken
         fig.update_layout(
-            xaxis={"type": "category", "fixedrange": True, "tickangle": -90}, 
+            xaxis={"type": "category", "fixedrange": True, "tickangle": 0}, 
             yaxis={"fixedrange": True}, 
             height=300, 
-            margin=dict(l=0, r=0, t=10, b=40)
+            margin=dict(l=20, r=20, t=10, b=40)
         )
         st.plotly_chart(fig, use_container_width=True, config=MOBILE_PLOTLY_CONFIG)
 
