@@ -84,7 +84,7 @@ try:
 
     st.divider()
 
-    # 5. FOKUS-GRAFIK (Mit abgekürzten, waagerechten Saisons)
+    # 5. FOKUS-GRAFIK (Optimiert: Jedes 2. Jahr überspringen, damit nichts überlappt)
     st.subheader("Ausgaben-Verlauf")
     if not df.empty:
         df_chart = df.groupby("Saison")["Ablöse_num"].sum().reset_index()
@@ -95,12 +95,12 @@ try:
         
         fig = px.bar(df_chart, x="Saison_kurz", y="Mio", labels={"Mio": "Mio. €", "Saison_kurz": "Saison"})
         
-        # tickangle: 0 stellt den Text waagerecht direkt unter die Balken
+        # dtick=2 zeigt nur jeden zweiten Wert an, damit es auf dem Handy-Bildschirm lesbar bleibt
         fig.update_layout(
-            xaxis={"type": "category", "fixedrange": True, "tickangle": 0}, 
+            xaxis={"type": "category", "fixedrange": True, "tickangle": 0, "dtick": 2}, 
             yaxis={"fixedrange": True}, 
-            height=300, 
-            margin=dict(l=20, r=20, t=10, b=40)
+            height=320, 
+            margin=dict(l=20, r=20, t=10, b=50)
         )
         st.plotly_chart(fig, use_container_width=True, config=MOBILE_PLOTLY_CONFIG)
 
