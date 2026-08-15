@@ -7,7 +7,7 @@ st.title("⚽ S04 Transfers")
 
 # 2. HIER DEINEN LINK EINFÜGEN!
 # Kopiere den Link aus deinem Browser-Fenster hier rein:
-SHEET_URL = https://docs.google.com/spreadsheets/d/1IYO8gTk5TYeqykFRGuBFX3l5-JledI0-CP_KLvotOYQ/edit?gid=0#gid=0
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1IYO8gTk5TYeqykFRGuBFX3l5-JledI0-CP_KLvotOYQ/edit?gid=0#gid=0"
 
 # 3. Daten direkt laden
 @st.cache_data(ttl=600) 
