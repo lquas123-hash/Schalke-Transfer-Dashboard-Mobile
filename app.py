@@ -5,7 +5,7 @@ import plotly.express as px
 # Minimalistisches Setup im Mobile-Layout
 st.set_page_config(page_title="S04 App", layout="centered")
 
-# App-CSS angepasst für den Dark Mode (keine hellen/weißen Kästen mehr)
+# App-CSS angepasst für den Dark Mode
 st.markdown("""
     <style>
     .block-container { padding: 1rem !important; }
@@ -14,7 +14,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Mobiler Plotly Config, damit Grafiken nicht stören
 MOBILE_PLOTLY_CONFIG = {
     'displayModeBar': False,
     'scrollZoom': False,
@@ -23,12 +22,12 @@ MOBILE_PLOTLY_CONFIG = {
 
 SHEET_ID = "1IYO8gTk5TYeqykFRGuBFX3l5-JledI0-CP_KLvotOYQ"
 
-# Daten laden (stabil ohne Datenverlust durch dropna)
+# Daten laden
 @st.cache_data(ttl=60)
 def load_data(sheet_id):
     csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
     df = pd.read_csv(csv_url, header=2)
-    df = df.fillna("") # Verhindert das Löschen unvollständiger Zeilen
+    df = df.fillna("") 
 
     cols = ["Saison", "Manager", "Spieler", "Position", "Alter", "Ablöse", "Nationalität", "Kontinent", "Abgebender_Verein", "Liga", "Region", "Transferart"]
     if len(df.columns) >= len(cols):
@@ -36,7 +35,6 @@ def load_data(sheet_id):
     else:
         df.columns = cols[:len(df.columns)]
 
-    # Numerische Werte sauber aufbereiten
     df["Ablöse_num"] = (
         df["Ablöse"].astype(str)
         .str.replace("€", "", regex=False)
@@ -66,37 +64,40 @@ try:
 
     st.divider()
 
-    # 3. STATS-DASHBOARD (Im Dark-Mode-Design)
+    # 3. STATS-DASHBOARD
     c1, c2 = st.columns(2)
     c1.metric("Transfers", len(df))
     c2.metric("Budget", f"{int(df['Ablöse_num'].sum()/1000000)} Mio €")
 
     st.divider()
 
-    # 4. TABELLE
+    # 4. TABELLE (Gewünschte Spaltenreihenfolge: Saison, Manager, Spieler, Ablöse)
     st.subheader("Aktuelle Auswahl")
     if "Ablöse_num" in df.columns:
         df_display = df.sort_values(by="Ablöse_num", ascending=False)
     else:
         df_display = df
 
-    # Nur die wichtigsten Spalten für die App-Ansicht
-    cols_to_show = [c for c in ["Spieler", "Ablöse", "Saison", "Manager"] if c in df_display.columns]
+    # Exakte Reihenfolge definiert
+    desired_cols = ["Saison", "Manager", "Spieler", "Ablöse"]
+    cols_to_show = [c for c in desired_cols if c in df_display.columns]
     st.dataframe(df_display[cols_to_show], use_container_width=True, hide_index=True)
 
     st.divider()
 
-    # 5. FOKUS-GRAFIK
+    # 5. FOKUS-GRAFIK (Mit gedrehten, lesbaren Jahreszahlen unten)
     st.subheader("Ausgaben-Verlauf")
     if not df.empty:
         df_chart = df.groupby("Saison")["Ablöse_num"].sum().reset_index()
         df_chart["Mio"] = df_chart["Ablöse_num"] / 1e6
         fig = px.bar(df_chart, x="Saison", y="Mio", labels={"Mio": "Mio. €"})
+        
+        # tickangle=-90 sorgt dafür, dass die Saisons senkrecht stehen und perfekt lesbar sind
         fig.update_layout(
-            xaxis={"type": "category", "fixedrange": True}, 
+            xaxis={"type": "category", "fixedrange": True, "tickangle": -90}, 
             yaxis={"fixedrange": True}, 
-            height=250, 
-            margin=dict(l=0, r=0, t=10, b=20)
+            height=300, 
+            margin=dict(l=0, r=0, t=10, b=40)
         )
         st.plotly_chart(fig, use_container_width=True, config=MOBILE_PLOTLY_CONFIG)
 
