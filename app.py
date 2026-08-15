@@ -4,39 +4,32 @@ import streamlit as st
 st.set_page_config(page_title="S04 Transfer-App", layout="centered")
 st.title("⚽ S04 Transfers (Mobile)")
 
-CSV_URL = "https://docs.google.com/spreadsheets/d/1IYO8gTk5TYeqykFRGuBFX3l5-JledI0-CP_KLvotOYQ/edit?gid=0#gid=0"
+CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSkS8BNWhblJuNDjHFrNLr6kD4I4ctFZcd_z11qnTiUfmymwb83fip4_iVRFzH5w7HCQNxVfcnnu2d7/pub?output=csv"
 
 
 @st.cache_data(ttl=600)
 def load_data(url):
-  # skiprows=6 überspringt die ersten 6 Zeilen, falls dort das Logo/Überschriften stehen
-  # header=0 macht die neue erste Zeile (Zeile 7) zur echten Spaltenüberschrift
-  df = pd.read_csv(url, skiprows=6)
-  # Spaltennamen bereinigen (Leerzeichen entfernen)
+  # engine='python' und on_bad_lines='skip' verhindern Abstürze bei unsauberen Zeilen
+  df = pd.read_csv(url, skiprows=6, engine="python", on_bad_lines="skip")
   df.columns = df.columns.str.strip()
+  # Entferne komplett leere Zeilen
+  df = df.dropna(how="all")
   return df
 
 
 try:
   df = load_data(CSV_URL)
 
-  # Kleine Statistik-Box oben (wie in deiner alten Version)
-  col1, col2 = st.columns(2)
-  with col1:
-    st.metric("Gesamt Transfers", len(df))
-  with col2:
-    if "Ablöse" in df.columns:
-      st.metric("Tabelle", "Aktiv")
+  # Statistik oben
+  st.metric("Gesamt Transfers", len(df))
 
-  # Dynamische Filter (sucht automatisch nach passenden Spalten)
+  # Filter
   with st.expander("🔍 Filter & Optionen", expanded=True):
-    # Finde Spalten, die nach Position oder Saison aussehen könnten
     mögliche_spalten = [
         c
         for c in df.columns
         if "position" in c.lower() or "saison" in c.lower()
     ]
-
     for col in mögliche_spalten:
       werte = ["Alle"] + list(df[col].dropna().unique().astype(str))
       auswahl = st.selectbox(f"Filter nach {col}:", werte)
