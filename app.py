@@ -9,34 +9,58 @@ CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSkS8BNWhblJuNDjHFrNL
 
 @st.cache_data(ttl=600)
 def load_data(url):
-  # engine='python' und on_bad_lines='skip' verhindern Abstürze bei unsauberen Zeilen
-  df = pd.read_csv(url, skiprows=6, engine="python", on_bad_lines="skip")
-  df.columns = df.columns.str.strip()
-  # Entferne komplett leere Zeilen
+  # Wir laden die CSV ganz normal ab Zeile 1 ohne Zeilen zu überspringen
+  df = pd.read_csv(url, engine="python", on_bad_lines="skip")
   df = df.dropna(how="all")
+
+  # Falls deine Tabelle oben noch Leerzeilen hat, schneiden wir sie ab,
+  # sobald die Spalte mit der Saison (erste Spalte) Daten enthält
   return df
 
 
 try:
   df = load_data(CSV_URL)
 
+  # Falls die erste Zeile die echten Spaltennamen enthält aber als Daten gelistet ist:
+  # Wir geben den Spalten feste Namen, falls sie durcheinander sind.
+  # (Passe die Namen hier an, falls deine Spalten im Google Sheet anders heißen)
+  erwartete_spalten = [
+      "Saison",
+      "Manager/Trainer",
+      "Spieler",
+      "Position",
+      "Alter",
+      "Ablöse",
+      "Land",
+      "Art",
+  ]
+
+  # Wenn die Spaltenanzahl ungefähr passt, benennen wir sie sauber um
+  if len(df.columns) >= len(erwartete_spalten):
+    df.columns = erwartete_spalten + list(df.columns[len(erwartete_spalten) :])
+
   # Statistik oben
   st.metric("Gesamt Transfers", len(df))
 
-  # Filter
+  # Funktionierende Filter
   with st.expander("🔍 Filter & Optionen", expanded=True):
-    mögliche_spalten = [
-        c
-        for c in df.columns
-        if "position" in c.lower() or "saison" in c.lower()
-    ]
-    for col in mögliche_spalten:
-      werte = ["Alle"] + list(df[col].dropna().unique().astype(str))
-      auswahl = st.selectbox(f"Filter nach {col}:", werte)
-      if auswahl != "Alle":
-        df = df[df[col].astype(str) == auswahl]
+    # Nach Position filtern
+    if "Position" in df.columns:
+      pos_liste = ["Alle"] + list(df["Position"].dropna().unique().astype(str))
+      w_pos = st.selectbox("Position:", pos_liste)
+      if w_pos != "Alle":
+        df = df[df["Position"].astype(str) == w_pos]
 
-  # Tabelle anzeigen
+    # Nach Saison filtern
+    if "Saison" in df.columns:
+      saison_liste = ["Alle"] + list(
+          df["Saison"].dropna().unique().astype(str)
+      )
+      w_saison = st.selectbox("Saison:", saison_liste)
+      if w_saison != "Alle":
+        df = df[df["Saison"].astype(str) == w_saison]
+
+  # Tabelle sauber anzeigen
   st.dataframe(df, use_container_width=True)
 
 except Exception as e:
