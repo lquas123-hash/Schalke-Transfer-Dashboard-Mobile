@@ -67,7 +67,7 @@ try:
     # 3. STATS-DASHBOARD
     c1, c2 = st.columns(2)
     c1.metric("Transfers", len(df))
-    c2.metric("Budget", f"{int(df['Ablöse_num'].sum()/1000000)} Mio €")
+    c2.metric("Ausgaben", f"{int(df['Ablöse_num'].sum()/1000000)} Mio €")
 
     st.divider()
 
